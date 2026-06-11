@@ -87,15 +87,30 @@ impl From<std::num::ParseIntError> for ValidationError {
 
 #[derive(Debug)]
 pub enum WriteError {
-    AccessDenied,
+    WriterIOError(std::io::Error),
 }
 
 impl std::fmt::Display for WriteError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            WriteError::AccessDenied => write!(f, "Write access denied"),
+            WriteError::WriterIOError(err) => {
+                write!(f, "Write error: {}", err)
+            }
         }
     }
 }
 
-impl std::error::Error for WriteError {}
+impl std::error::Error for WriteError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            WriteError::WriterIOError(source) => Some(source),
+            _ => None,
+        }
+    }
+}
+
+impl From<std::io::Error> for WriteError {
+    fn from(source: std::io::Error) -> Self {
+        WriteError::WriterIOError(source)
+    }
+}

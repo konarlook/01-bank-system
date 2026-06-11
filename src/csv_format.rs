@@ -2,6 +2,8 @@ use crate::error::{ReadError, ValidationError, WriteError};
 use crate::{Formater, Transaction};
 use std::io::{Read, Write};
 
+const CSV_HEADER: &str = "date,category,kind,amount";
+
 pub struct CSVFormater {}
 
 impl Formater for CSVFormater {
@@ -16,49 +18,34 @@ impl Formater for CSVFormater {
             .collect();
 
         let header = &raw.remove(0);
-        if header.to_string() != "date,category,kind,amount" {
+        if header.to_string() != CSV_HEADER {
             return Err(ReadError::IncorrectCSVHeader);
         }
 
-        let transactions: Vec<Transaction> =
-            raw.into_iter()
-                .map(|s| Self::parse(s.trim()))
-                .collect::<Result<Vec<Transaction>, ValidationError>>()?;
+        let transactions: Vec<Transaction> = raw
+            .into_iter()
+            .map(|s| Transaction::from_string(',', s))
+            .collect::<Result<Vec<Transaction>, ValidationError>>()?;
 
         Ok(transactions)
     }
 
-    fn write_to<W: Write>(t: &Vec<Transaction>, w: &mut W) -> Result<(), WriteError> {
-        todo!()
-    }
-}
+    fn write_to<W: Write>(ts: &Vec<Transaction>, w: &mut W) -> Result<(), WriteError> {
+        writeln!(w, "{}", CSV_HEADER)?;
+        for t in ts {
+            writeln!(w, "{},{},{},{}", t.dt, t.category, t.kind, t.amount)?;
+        }
 
-impl CSVFormater {
-    fn parse(ops: &str) -> Result<Transaction, ValidationError> {
-        let raw: Vec<&str> = ops
-            .split(',')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .collect();
-        if raw.len() != 4 {
-            return Err(ValidationError::NotFullData);
-        };
-
-        Ok(Transaction {
-            dt: raw[0].to_string(),
-            category: raw[1].parse()?,
-            kind: raw[2].parse()?,
-            amount: raw[3].parse()?,
-        })
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Formater;
     use crate::csv_format::CSVFormater;
     use crate::model::{TxCategory, TxKind};
-    use std::io::{BufReader, Cursor};
+    use crate::{Formater, Transaction};
+    use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
     #[test]
     fn test_read_csv_happy_path() {
@@ -67,12 +54,10 @@ mod tests {
             2026-04-01,salary,income,120000
         "#;
         let cursor = Cursor::new(data);
-        let mut reader = BufReader::new(cursor);
-        let mut reader = BufReader::new(&mut reader);
+        let mut reader = BufReader::new(cursor); 
 
         let result = CSVFormater::read_from(&mut reader);
 
-        println!("{:?}", result);
         assert!(&result.is_ok());
 
         let tx = &result.unwrap()[0];
@@ -81,5 +66,29 @@ mod tests {
         assert_eq!(tx.category, TxCategory::Salary);
         assert_eq!(tx.kind, TxKind::Income);
         assert_eq!(tx.amount, 120000);
+    }
+
+    #[test]
+    fn test_write_csv_happy_path() {
+        let tx = Transaction {
+            dt: "2026-04-01".to_string(),
+            category: TxCategory::Salary,
+            kind: TxKind::Income,
+            amount: 120000,
+        };
+
+        let buffer = Vec::new();
+        let mut cursor = Cursor::new(buffer);
+        {
+            let mut writer = BufWriter::new(&mut cursor);
+            CSVFormater::write_to(&vec![tx], &mut writer);
+            writer.flush().expect("test flush error");
+        }
+
+        cursor.set_position(0);
+        let lines: Vec<String> = BufReader::new(cursor).lines().flatten().collect();
+
+        assert_eq!(lines[0], "date,category,kind,amount");
+        assert_eq!(lines[1], "2026-04-01,salary,income,120000");
     }
 }
