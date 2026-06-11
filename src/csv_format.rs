@@ -1,5 +1,6 @@
+use crate::Transaction;
 use crate::error::{ReadError, ValidationError, WriteError};
-use crate::{Formater, Transaction};
+use crate::format::Formater;
 use std::io::{Read, Write};
 
 const CSV_HEADER: &str = "date,category,kind,amount";
@@ -42,9 +43,10 @@ impl Formater for CSVFormater {
 
 #[cfg(test)]
 mod tests {
+    use crate::Transaction;
     use crate::csv_format::CSVFormater;
+    use crate::format::Formater;
     use crate::model::{TxCategory, TxKind};
-    use crate::{Formater, Transaction};
     use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
     #[test]
@@ -54,7 +56,7 @@ mod tests {
             2026-04-01,salary,income,120000
         "#;
         let cursor = Cursor::new(data);
-        let mut reader = BufReader::new(cursor); 
+        let mut reader = BufReader::new(cursor);
 
         let result = CSVFormater::read_from(&mut reader);
 
@@ -81,7 +83,10 @@ mod tests {
         let mut cursor = Cursor::new(buffer);
         {
             let mut writer = BufWriter::new(&mut cursor);
-            CSVFormater::write_to(&vec![tx], &mut writer);
+            let w_res = CSVFormater::write_to(&vec![tx], &mut writer);
+
+            assert!(w_res.is_ok());
+
             writer.flush().expect("test flush error");
         }
 

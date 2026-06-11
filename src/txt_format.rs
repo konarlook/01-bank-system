@@ -1,5 +1,6 @@
+use crate::Transaction;
 use crate::error::{ReadError, ValidationError, WriteError};
-use crate::{Formater, Transaction};
+use crate::format::Formater;
 use std::io::{Read, Write};
 
 pub struct TxTFormater {}
@@ -30,9 +31,10 @@ impl Formater for TxTFormater {
 
 #[cfg(test)]
 mod tests {
+    use crate::Transaction;
+    use crate::format::Formater;
     use crate::model::{TxCategory, TxKind};
     use crate::txt_format::TxTFormater;
-    use crate::{Formater, Transaction};
     use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
     #[test]
@@ -68,13 +70,16 @@ mod tests {
         let mut cursor = Cursor::new(buffer);
         {
             let mut writer = BufWriter::new(&mut cursor);
-            TxTFormater::write_to(&vec![tx], &mut writer).unwrap();
+            let w_res = TxTFormater::write_to(&vec![tx], &mut writer);
+
+            assert!(w_res.is_ok());
+
             writer.flush().expect("test flush error");
         }
-        
+
         cursor.set_position(0);
         let lines: Vec<String> = BufReader::new(cursor).lines().flatten().collect();
-        
+
         assert_eq!(lines[0], "2026-04-01;salary;income;120000")
     }
 }

@@ -3,6 +3,8 @@ pub enum ReadError {
     Validate(ValidationError),
     File(std::io::Error),
     IncorrectCSVHeader,
+    IncorrectMagicBytes,
+    InvalidTimeConvert(std::string::FromUtf8Error),
 }
 
 impl std::fmt::Display for ReadError {
@@ -17,6 +19,12 @@ impl std::fmt::Display for ReadError {
             ReadError::IncorrectCSVHeader => {
                 write!(f, "Incorrect CSV header")
             }
+            ReadError::IncorrectMagicBytes => {
+                write!(f, "Incorrect magic bytes")
+            }
+            ReadError::InvalidTimeConvert(source) => {
+                write!(f, "Invalid time conversion: {}", source)
+            }
         }
     }
 }
@@ -26,6 +34,7 @@ impl std::error::Error for ReadError {
         match self {
             ReadError::Validate(source) => Some(source),
             ReadError::File(source) => Some(source),
+            ReadError::InvalidTimeConvert(source) => Some(source),
             _ => None,
         }
     }
@@ -40,6 +49,12 @@ impl From<ValidationError> for ReadError {
 impl From<std::io::Error> for ReadError {
     fn from(source: std::io::Error) -> Self {
         ReadError::File(source)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for ReadError {
+    fn from(source: std::string::FromUtf8Error) -> Self {
+        ReadError::InvalidTimeConvert(source)
     }
 }
 
@@ -88,6 +103,8 @@ impl From<std::num::ParseIntError> for ValidationError {
 #[derive(Debug)]
 pub enum WriteError {
     WriterIOError(std::io::Error),
+    TooManyTransactions,
+    TooLargeDateString,
 }
 
 impl std::fmt::Display for WriteError {
@@ -95,6 +112,12 @@ impl std::fmt::Display for WriteError {
         match self {
             WriteError::WriterIOError(err) => {
                 write!(f, "Write error: {}", err)
+            }
+            WriteError::TooManyTransactions => {
+                write!(f, "File contains too many transactions")
+            }
+            WriteError::TooLargeDateString => {
+                write!(f, "Transaction contains too large date string")
             }
         }
     }

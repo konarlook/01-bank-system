@@ -27,6 +27,27 @@ impl std::str::FromStr for TxKind {
     }
 }
 
+impl TryFrom<u8> for TxKind {
+    type Error = ValidationError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TxKind::Income),
+            1 => Ok(TxKind::Expense),
+            _ => Err(ValidationError::UnknownKindType),
+        }
+    }
+}
+
+impl From<TxKind> for u8 {
+    fn from(kind: TxKind) -> Self {
+        match kind {
+            TxKind::Income => 0,
+            TxKind::Expense => 1,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum TxCategory {
     Salary,
@@ -51,5 +72,71 @@ impl std::str::FromStr for TxCategory {
             "rent" => Ok(TxCategory::Rent),
             _ => Err(ValidationError::UnknownCategoryType),
         }
+    }
+}
+
+impl TryFrom<u8> for TxCategory {
+    type Error = ValidationError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TxCategory::Salary),
+            1 => Ok(TxCategory::Rent),
+            _ => Err(ValidationError::UnknownCategoryType),
+        }
+    }
+}
+
+impl From<TxCategory> for u8 {
+    fn from(kind: TxCategory) -> Self {
+        match kind {
+            TxCategory::Salary => 0,
+            TxCategory::Rent => 1,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::error::ValidationError;
+    use crate::model::{TxCategory, TxKind};
+
+    #[test]
+    fn test_convert_tx_category_to_bytes() {
+        assert_eq!(u8::from(TxCategory::Salary), 0);
+        assert_eq!(u8::from(TxCategory::Rent), 1);
+
+        assert_eq!(
+            TxCategory::try_from(u8::from(TxCategory::Salary)).unwrap(),
+            TxCategory::Salary
+        );
+        assert_eq!(
+            TxCategory::try_from(u8::from(TxCategory::Rent)).unwrap(),
+            TxCategory::Rent
+        );
+
+        assert!(matches!(
+            TxCategory::try_from(7),
+            Err(ValidationError::UnknownCategoryType)
+        ));
+    }
+
+    #[test]
+    fn test_convert_tx_kind_from_bytes() {
+        assert_eq!(u8::from(TxKind::Income), 0);
+        assert_eq!(u8::from(TxKind::Expense), 1);
+
+        assert_eq!(
+            TxKind::try_from(u8::from(TxKind::Income)).unwrap(),
+            TxKind::Income
+        );
+        assert_eq!(
+            TxKind::try_from(u8::from(TxKind::Expense)).unwrap(),
+            TxKind::Expense
+        );
+        assert!(matches!(
+            TxKind::try_from(7),
+            Err(ValidationError::UnknownKindType)
+        ));
     }
 }

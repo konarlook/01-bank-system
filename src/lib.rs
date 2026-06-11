@@ -1,12 +1,14 @@
-use crate::error::{ReadError, ValidationError, WriteError};
+use crate::error::ValidationError;
 use crate::model::{TxCategory, TxKind};
 
+mod bin_format;
 mod csv_format;
 mod error;
+mod format;
 mod model;
 mod txt_format;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transaction {
     dt: String,
     category: TxCategory,
@@ -32,9 +34,4 @@ impl Transaction {
             amount: raw[3].parse()?,
         })
     }
-}
-
-trait Formater {
-    fn read_from<R: std::io::Read>(r: &mut R) -> Result<Vec<Transaction>, ReadError>;
-    fn write_to<W: std::io::Write>(ts: &Vec<Transaction>, w: &mut W) -> Result<(), WriteError>;
 }
