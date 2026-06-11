@@ -137,3 +137,48 @@ impl From<std::io::Error> for WriteError {
         WriteError::WriterIOError(source)
     }
 }
+
+#[derive(Debug)]
+pub enum ConvertError {
+    ReadError(ReadError),
+    WriteError(WriteError),
+    UnknownFormat,
+}
+
+impl std::fmt::Display for ConvertError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ConvertError::ReadError(source) => {
+                write!(f, "Read error: {}", source)
+            }
+            ConvertError::WriteError(source) => {
+                write!(f, "Write error: {}", source)
+            }
+            ConvertError::UnknownFormat => {
+                write!(f, "Unknown file format")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ConvertError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ConvertError::ReadError(source) => Some(source),
+            ConvertError::WriteError(source) => Some(source),
+            _ => None,
+        }
+    }
+}
+
+impl From<ReadError> for ConvertError {
+    fn from(source: ReadError) -> Self {
+        ConvertError::ReadError(source)
+    }
+}
+
+impl From<WriteError> for ConvertError {
+    fn from(source: WriteError) -> Self {
+        ConvertError::WriteError(source)
+    }
+}
