@@ -14,7 +14,7 @@ fn main() {
 fn run() -> Result<(), Box<dyn error::Error>> {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 3 {
+    if args.len() != 3 {
         eprintln!("Использование");
         eprintln!("     converter input.csv outpub.txt");
         eprintln!("     converter input.txt output.bin");
@@ -33,8 +33,8 @@ fn run() -> Result<(), Box<dyn error::Error>> {
         .ok_or(ConvertError::UnknownFormat)?
         .parse()?;
 
-    let mut reader = fs::File::open(args[1].clone()).unwrap();
-    let mut writer = fs::File::create(args[2].clone()).unwrap();
+    let mut reader = fs::File::open(args[1].clone())?;
+    let mut writer = fs::File::create(args[2].clone())?;
 
     convert(inp, out, &mut reader, &mut writer)?;
 
