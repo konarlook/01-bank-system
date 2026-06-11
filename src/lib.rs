@@ -4,8 +4,8 @@ use crate::model::Transaction;
 
 mod bin_format;
 mod csv_format;
-mod error;
-mod format;
+pub mod error;
+pub mod format;
 mod model;
 mod txt_format;
 
@@ -287,7 +287,7 @@ mod tests {
     fn test_compare_position_zero_based() {
         let left = sample();
         let right: Vec<Transaction> = vec![];
-        
+
         assert_eq!(compare(&left, &right), Some(Difference::EmptyList))
     }
 }
