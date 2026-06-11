@@ -1,6 +1,6 @@
-use crate::Transaction;
 use crate::error::{ReadError, ValidationError, WriteError};
 use crate::format::Formater;
+use crate::model::Transaction;
 use std::io::{Read, Write};
 
 pub struct TxTFormater {}
@@ -31,9 +31,8 @@ impl Formater for TxTFormater {
 
 #[cfg(test)]
 mod tests {
-    use crate::Transaction;
     use crate::format::Formater;
-    use crate::model::{TxCategory, TxKind};
+    use crate::model::{Transaction, TxCategory, TxKind};
     use crate::txt_format::TxTFormater;
     use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 

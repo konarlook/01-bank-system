@@ -1,6 +1,6 @@
-use crate::Transaction;
 use crate::error::{ReadError, ValidationError, WriteError};
 use crate::format::Formater;
+use crate::model::Transaction;
 use std::io::{Read, Write};
 
 const CSV_HEADER: &str = "date,category,kind,amount";
@@ -43,10 +43,9 @@ impl Formater for CSVFormater {
 
 #[cfg(test)]
 mod tests {
-    use crate::Transaction;
     use crate::csv_format::CSVFormater;
     use crate::format::Formater;
-    use crate::model::{TxCategory, TxKind};
+    use crate::model::{Transaction, TxCategory, TxKind};
     use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
     #[test]

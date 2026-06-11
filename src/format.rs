@@ -1,5 +1,5 @@
-use crate::Transaction;
 use crate::error::{ReadError, WriteError};
+use crate::model::Transaction;
 
 pub trait Formater {
     fn read_from<R: std::io::Read>(r: &mut R) -> Result<Vec<Transaction>, ReadError>;

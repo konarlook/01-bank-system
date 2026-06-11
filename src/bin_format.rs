@@ -1,7 +1,6 @@
-use crate::Transaction;
-use crate::error::{ReadError, ValidationError, WriteError};
+use crate::error::{ReadError, WriteError};
 use crate::format::Formater;
-use crate::model::{TxCategory, TxKind};
+use crate::model::{Transaction, TxCategory, TxKind};
 use std::io::{Read, Write};
 
 pub struct BinFormater {}
@@ -90,11 +89,9 @@ impl BinFormater {
 
 #[cfg(test)]
 mod tests {
-    use crate::Transaction;
     use crate::bin_format::BinFormater;
     use crate::format::Formater;
-    use crate::model::{TxCategory, TxKind};
-    use std::io::BufReader;
+    use crate::model::{Transaction, TxCategory, TxKind};
 
     #[test]
     fn test_read_bin_format() {
