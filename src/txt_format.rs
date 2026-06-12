@@ -1,22 +1,22 @@
-use crate::error::{ReadError, ValidationError, WriteError};
+use crate::error::{ReadError, WriteError};
 use crate::format::Formater;
 use crate::model::Transaction;
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 
 pub struct TxTFormater {}
 
 impl Formater for TxTFormater {
     fn read_from<R: Read>(r: &mut R) -> Result<Vec<Transaction>, ReadError> {
-        let mut st = String::new();
-        r.read_to_string(&mut st)?;
-
-        let tx: Vec<Transaction> = st
-            .lines()
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .map(|s| Transaction::from_string(';', s))
-            .collect::<Result<Vec<Transaction>, ValidationError>>()?;
-
+        let reader = BufReader::new(r);
+        let mut tx: Vec<Transaction> = Vec::new();
+        for line in reader.lines() {
+            let line = line?;
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            tx.push(Transaction::from_string(';', line)?);
+        }
         Ok(tx)
     }
 

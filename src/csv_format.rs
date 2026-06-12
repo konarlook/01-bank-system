@@ -1,7 +1,7 @@
-use crate::error::{ReadError, ValidationError, WriteError};
+use crate::error::{ReadError, WriteError};
 use crate::format::Formater;
 use crate::model::Transaction;
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 
 const CSV_HEADER: &str = "date,category,kind,amount";
 
@@ -9,26 +9,24 @@ pub struct CSVFormater {}
 
 impl Formater for CSVFormater {
     fn read_from<R: Read>(r: &mut R) -> Result<Vec<Transaction>, ReadError> {
-        let mut st = String::new();
-        r.read_to_string(&mut st)?;
 
-        let mut raw: Vec<&str> = st
-            .lines()
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .collect();
+        let mut reader = BufReader::new(r).lines();
+        let header = reader.next().ok_or(ReadError::IncorrectCSVHeader)??;
 
-        let header = &raw.remove(0);
-        if header.to_string() != CSV_HEADER {
+        if header.trim() != CSV_HEADER {
             return Err(ReadError::IncorrectCSVHeader);
         }
 
-        let transactions: Vec<Transaction> = raw
-            .into_iter()
-            .map(|s| Transaction::from_string(',', s))
-            .collect::<Result<Vec<Transaction>, ValidationError>>()?;
-
-        Ok(transactions)
+        let mut tx: Vec<Transaction> = Vec::new();
+        for line in reader {
+            let line = line?;
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            tx.push(Transaction::from_string(',', line)?);
+        }
+        Ok(tx)
     }
 
     fn write_to<W: Write>(ts: &Vec<Transaction>, w: &mut W) -> Result<(), WriteError> {
@@ -50,10 +48,7 @@ mod tests {
 
     #[test]
     fn test_read_csv_happy_path() {
-        let data = r#"
-            date,category,kind,amount
-            2026-04-01,salary,income,120000
-        "#;
+        let data = "date,category,kind,amount\n2026-04-01,salary,income,120000\n";
         let cursor = Cursor::new(data);
         let mut reader = BufReader::new(cursor);
 
